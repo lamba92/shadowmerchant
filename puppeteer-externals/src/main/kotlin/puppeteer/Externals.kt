@@ -9,13 +9,6 @@ import child_process.ChildProcess
 import org.w3c.dom.Element
 import kotlin.js.Promise
 
-external fun launch(options: LaunchOptions = definedExternally): Promise<Browser>
-
-/**
- * This methods attaches Puppeteer to an existing browser instance.
- */
-external fun connect(options: ConnectOptions): Promise<Browser>
-
 /**
  * Clears all registered handlers.
  */

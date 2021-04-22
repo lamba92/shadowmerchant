@@ -3,7 +3,7 @@ plugins {
 }
 
 kotlin {
-    js(LEGACY) {
+    js(IR) {
         nodejs()
     }
     sourceSets {
@@ -11,7 +11,8 @@ kotlin {
             dependencies {
                 api("org.jetbrains.kotlinx:kotlinx-nodejs:0.0.7")
                 api(npm("puppeteer", "8.0.0"))
-                api(npm("puppeteer-core", "8.0.0"))
+                api(npm("bufferutil", "4.0.3"))
+                api(npm("utf-8-validate", "5.0.4"))
             }
         }
     }

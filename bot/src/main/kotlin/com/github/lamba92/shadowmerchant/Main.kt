@@ -1,10 +1,14 @@
 package com.github.lamba92.shadowmerchant
 
+import NodeJS.Process
+import NodeJS.get
 import kotlinx.coroutines.await
-import puppeteer.LaunchOptions
+import path.path.PlatformPath
+import puppeteer.Puppeteer
 import puppeteer.launch
 
-
 suspend fun main() {
-    launch(js("{}").unsafeCast<LaunchOptions>().apply { headless = false }).await()
+    val chrome = Puppeteer.launch { headless = false }.await()
+
+    chrome.newPage().await()
 }

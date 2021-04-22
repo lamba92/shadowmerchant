@@ -17,7 +17,7 @@ plugins {
 }
 
 kotlin {
-    js(LEGACY) {
+    js(IR) {
         nodejs {
             binaries.executable()
         }
@@ -58,95 +58,77 @@ fun NodeTask.setNodeModulesPath(path: String) =
 fun NodeTask.setNodeModulesPath(folder: File) =
     environment.put("NODE_PATH", folder.normalize().absolutePath)
 
-//tasks {
-//
-//    val compileProductionExecutableKotlinJs by getting(KotlinJsIrLink::class)
-//
-//    val fixNodeFetchForWebpack by creating(Copy::class) {
-//        dependsOn(compileProductionExecutableKotlinJs)
-//        from(compileProductionExecutableKotlinJs.outputFile) {
-//            filter { line ->
-//                line.replace(
-//                    "tmp = jsRequireNodeFetch()(input, init);",
-//                    "tmp = jsRequireNodeFetch().default(input, init);"
-//                )
-//            }
-//            rename { "fixed.js" }
-//        }
-//        into("$buildDir/fix")
-//    }
-//
-//    Mode.values()
-//        .map { it to it.name.toLowerCase().capitalize() }
-//        .forEach { (mode, modeName) ->
-//            val generateWebpackConfig =
-//                create<GenerateWebpackConfig>("generate${modeName}WebpackConfig") {
-//                    dependsOn(fixNodeFetchForWebpack)
-//                    group = "other"
-//                    target = NODE
-//                    this.mode = mode // PRODUCTION will fail
-//                    entryFile = fixNodeFetchForWebpack.destinationDir / "fixed.js"
-//                    modulesFolder.set(listOf(rootPackageJson.rootPackageJson.parentFile / "node_modules"))
-//                    outputBundleName = buildString {
-//                        append(project.name)
-//                        when (mode) {
-//                            PRODUCTION -> append("-prod")
-//                            DEVELOPMENT -> append("-dev")
-//                        }
-//                        append(".js")
-//                    }
-//                    outputBundleFolder = file("$buildDir/distributions").absolutePath
-//                    outputConfig = file("$buildDir/webpack/webpack.${modeName.toLowerCase()}.js")
-//                    if (mode == PRODUCTION)
-//                        terserSettings.set(
-//                            TerserPluginSettings(
-//                                parallel = true,
-//                                terserOptions = TerserPluginSettings.Options(
-//                                    mangle = true,
-//                                    sourceMaps = false,
-//                                    keepClassnames = Regex("AbortSignal"),
-//                                    keepFileNames = Regex("AbortSignal")
-//                                )
-//                            )
-//                        )
-//                }
-//
-//            val webpackExecutable = create<NodeTask>("${modeName.toLowerCase()}WebpackExecutable") {
-//                group = "distribution"
-//                dependsOn(generateWebpackConfig)
-//                script.set(rootPackageJson.rootPackageJson.parentFile / "node_modules/webpack-cli/bin/cli.js")
-//                args.set(listOf("-c", generateWebpackConfig.outputConfig.absolutePath))
-//
-//
-//                setNodeModulesPath(rootPackageJson.rootPackageJson.parentFile / "node_modules")
-//
-////                inputs.file(generateWebpackConfig.outputConfig)
-////                inputs.file(fixNodeFetchForWebpack.destinationDir / "fixed.js")
-////                outputs.file(generateWebpackConfig.outputBundleFile)
-//            }
-//
-//            register<NodeTask>("run${modeName}WebpackExecutable") {
-//                group = "application"
-//                dependsOn(webpackExecutable)
-//                script.set(generateWebpackConfig.outputBundleFile)
-//                rootProject.file("local.properties")
-//                    .takeIf { it.exists() && it.isFile }
-//                    ?.bufferedReader()
-//                    ?.use {
-//                        Properties().apply { load(it) }
-//                            .entries.toList()
-//                            .associate { it.key.toString() to it.value.toString() }
-//                            .let {
-//                                @Suppress("UnstableApiUsage")
-//                                environment.putAll(it)
-//                            }
-//                    }
-//            }
-//        }
-////    register<NodeTask>("run") {
-////        group = "application"
-////        dependsOn(compileProductionExecutableKotlinJs)
-////        script.set(compileProductionExecutableKotlinJs.outputFile)
-////        setNodeModulesPath(rootPackageJson.rootPackageJson.parentFile / "node_modules")
-////    }
-//}
+tasks {
+
+    val compileProductionExecutableKotlinJs by getting(KotlinJsIrLink::class)
+
+    val fixNodeFetchForWebpack by creating(Copy::class) {
+        dependsOn(compileProductionExecutableKotlinJs)
+        from(compileProductionExecutableKotlinJs.outputFile) {
+            filter { line ->
+                line.replace(
+                    "tmp = jsRequireNodeFetch()(input, init);",
+                    "tmp = jsRequireNodeFetch().default(input, init);"
+                )
+            }
+            rename { "fixed.js" }
+        }
+        into("$buildDir/fix")
+    }
+
+    Mode.values()
+        .map { it to it.name.toLowerCase().capitalize() }
+        .forEach { (mode, modeName) ->
+            val generateWebpackConfig =
+                create<GenerateWebpackConfig>("generate${modeName}WebpackConfig") {
+                    dependsOn(fixNodeFetchForWebpack)
+                    group = "other"
+                    target = NODE
+                    this.mode = mode // PRODUCTION will fail
+                    entryFile = fixNodeFetchForWebpack.destinationDir / "fixed.js"
+                    modulesFolder.set(listOf(rootPackageJson.rootPackageJson.parentFile / "node_modules"))
+                    outputBundleName = buildString {
+                        append(project.name)
+                        when (mode) {
+                            PRODUCTION -> append("-prod")
+                            DEVELOPMENT -> append("-dev")
+                        }
+                        append(".js")
+                    }
+                    outputBundleFolder = file("$buildDir/distributions").absolutePath
+                    outputConfig = file("$buildDir/webpack/webpack.${modeName.toLowerCase()}.js")
+                    if (mode == PRODUCTION)
+                        terserSettings.set(
+                            TerserPluginSettings(
+                                parallel = true,
+                                terserOptions = TerserPluginSettings.Options(
+                                    mangle = true,
+                                    sourceMaps = false,
+                                    keepClassnames = Regex("AbortSignal"),
+                                    keepFileNames = Regex("AbortSignal")
+                                )
+                            )
+                        )
+                }
+
+            val webpackExecutable = create<NodeTask>("${modeName.toLowerCase()}WebpackExecutable") {
+                group = "distribution"
+                dependsOn(generateWebpackConfig)
+                script.set(rootPackageJson.rootPackageJson.parentFile / "node_modules/webpack-cli/bin/cli.js")
+                args.set(listOf("-c", generateWebpackConfig.outputConfig.absolutePath))
+
+
+                setNodeModulesPath(rootPackageJson.rootPackageJson.parentFile / "node_modules")
+
+//                inputs.file(generateWebpackConfig.outputConfig)
+//                inputs.file(fixNodeFetchForWebpack.destinationDir / "fixed.js")
+//                outputs.file(generateWebpackConfig.outputBundleFile)
+            }
+
+            register<NodeTask>("run${modeName}WebpackExecutable") {
+                group = "application"
+                dependsOn(webpackExecutable)
+                script.set(generateWebpackConfig.outputBundleFile)
+            }
+        }
+}

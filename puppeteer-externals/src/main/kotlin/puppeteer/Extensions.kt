@@ -33,16 +33,14 @@ fun Page.onMetrics(action: (MetricsEventMessage) -> Unit) =
 fun Page.onPopup(action: (Page) -> Unit) =
     on("popup") { action(it.unsafeCast<Page>())}
 
-
-
 fun Page.onPageError(action: (Throwable) -> Unit) =
     on("pageerror") { action(it.unsafeCast<Throwable>())}
 
 fun Page.onClose(action: () -> Unit) =
     on("close") { action() }
 
-fun launch(configAction: LaunchOptions.() -> Unit): Promise<Browser> =
-    launch(js("{}").unsafeCast<LaunchOptions>().apply(configAction))
+fun Puppeteer.launch(configAction: LaunchOptions.() -> Unit): Promise<Browser> =
+    launch(jsObject<LaunchOptions>().apply(configAction))
 
 val MetricsEventMessage.metricsMap
     get() = entriesOf<Double>(metrics).toMap()
@@ -54,3 +52,6 @@ fun Object_values(jsObject: dynamic) =
 fun <T> entriesOf(jsObject: dynamic): List<Pair<String, T?>> {
     return Object_values(jsObject).map { (key, value) -> key as String to value.unsafeCast<T>() }
 }
+
+fun <T> jsObject() =
+    js("{}").unsafeCast<T>()
