@@ -1,6 +1,6 @@
 package puppeteer
 
-import kotlin.js.Promise
+import kotlinx.coroutines.await
 
 fun Page.onConsole(action: (ConsoleMessage) -> Unit) =
     on("close") { action(it.unsafeCast<ConsoleMessage>()) }
@@ -13,7 +13,6 @@ fun Page.onDomContentLoaded(action: () -> Unit) =
 
 fun Page.onError(action: (Throwable) -> Unit) =
     on("close") { action(it.unsafeCast<Throwable>()) }
-
 
 fun Page.onFrameAttached(action: (Frame) -> Unit) =
     on("frameattached") { action(it.unsafeCast<Frame>())}
@@ -39,19 +38,19 @@ fun Page.onPageError(action: (Throwable) -> Unit) =
 fun Page.onClose(action: () -> Unit) =
     on("close") { action() }
 
-fun Puppeteer.launch(configAction: LaunchOptions.() -> Unit): Promise<Browser> =
-    launch(jsObject<LaunchOptions>().apply(configAction))
+suspend fun Puppeteer.launch(configAction: LaunchOptions.() -> Unit): Browser =
+    launch(jsObject<LaunchOptions>().apply(configAction)).await()
 
 val MetricsEventMessage.metricsMap
     get() = entriesOf<Double>(metrics).toMap()
 
 @Suppress("FunctionName")
-fun Object_values(jsObject: dynamic) =
+internal fun Object_values(jsObject: dynamic) =
     js("Object.entries").unsafeCast<(dynamic) -> Array<Array<Any>>>()(jsObject)
 
-fun <T> entriesOf(jsObject: dynamic): List<Pair<String, T?>> {
+internal fun <T> entriesOf(jsObject: dynamic): List<Pair<String, T?>> {
     return Object_values(jsObject).map { (key, value) -> key as String to value.unsafeCast<T>() }
 }
 
-fun <T> jsObject() =
+internal fun <T> jsObject() =
     js("{}").unsafeCast<T>()
