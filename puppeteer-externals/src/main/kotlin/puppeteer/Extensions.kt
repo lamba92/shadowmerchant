@@ -41,6 +41,24 @@ val Page.onPageErrorFLow
 val Page.onCloseFlow
     get() = flowFor<Unit>("close")
 
+val Page.onRequestFlow
+    get() = flowFor<HTTPRequest>("request")
+
+val Page.onRequestFailedFlow
+    get() = flowFor<HTTPRequest>("requestfailed")
+
+val Page.onRequestFinishedFlow
+    get() = flowFor<HTTPRequest>("requestfinished")
+
+val Page.onResponseFlow
+    get() = flowFor<HTTPResponse>("response")
+
+val Page.onWorkerCreatedFlow
+    get() = flowFor<WebWorker>("workercreated")
+
+val Page.onWorkerDestroyedFlow
+    get() = flowFor<WebWorker>("workerdestroyed")
+
 suspend fun Puppeteer.launch(configAction: LaunchOptions.() -> Unit): Browser =
     launch(jsObject<LaunchOptions>().apply(configAction)).await()
 

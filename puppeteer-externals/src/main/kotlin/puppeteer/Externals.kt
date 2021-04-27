@@ -37,6 +37,14 @@ external interface Frame {
     //TODO
 }
 
+external interface HTTPRequest {
+    //TODO
+}
+
+external interface HTTPResponse {
+    //TODO
+}
+
 external interface MetricsEventMessage {
     var title: String
     var metrics: dynamic
