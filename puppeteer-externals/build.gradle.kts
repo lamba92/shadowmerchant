@@ -13,6 +13,9 @@ kotlin {
         useCommonJs()
     }
     sourceSets {
+        all {
+            languageSettings.useExperimentalAnnotation("kotlinx.coroutines.ExperimentalCoroutinesApi")
+        }
         main {
             dependencies {
                 api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.3")

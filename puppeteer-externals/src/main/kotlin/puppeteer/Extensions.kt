@@ -1,42 +1,45 @@
 package puppeteer
 
+import NodeJS.EventEmitter
 import kotlinx.coroutines.await
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.callbackFlow
 
-fun Page.onConsole(action: (ConsoleMessage) -> Unit) =
-    on("close") { action(it.unsafeCast<ConsoleMessage>()) }
+val Page.onConsole
+    get() = flowFor<ConsoleMessage>("console")
 
-fun Page.onDialog(action: (Dialog) -> Unit) =
-    on("dialog") { action(it.unsafeCast<Dialog>()) }
+val Page.onDialogFLow
+    get() = flowFor<Dialog>("dialog")
 
-fun Page.onDomContentLoaded(action: () -> Unit) =
-    on("domcontentloaded") { action() }
+val Page.onDomContentLoadedFLow
+    get() = flowFor<Unit>("domcontentloaded")
 
-fun Page.onError(action: (Throwable) -> Unit) =
-    on("close") { action(it.unsafeCast<Throwable>()) }
+val Page.onErrorFLow
+    get() = flowFor<Throwable>("close")
 
-fun Page.onFrameAttached(action: (Frame) -> Unit) =
-    on("frameattached") { action(it.unsafeCast<Frame>())}
+val Page.onFrameAttachedFLow
+    get() = flowFor<Frame>("frameattached")
 
-fun Page.onFrameDeatched(action: (Frame) -> Unit) =
-    on("framedeatched") { action(it.unsafeCast<Frame>())}
+val Page.onFrameDeatchedFLow
+    get() = flowFor<Frame>("framedeatched")
 
-fun Page.onFrameNavigated(action: (Frame) -> Unit) =
-    on("framenavigated") {action(it.unsafeCast<Frame>())}
+val Page.onFrameNavigatedFLow
+    get() = flowFor<Frame>("framenavigated")
 
-fun Page.onLoad(action: () -> Unit) =
-    on("load") { action() }
+val Page.onLoadFlow
+    get() = flowFor<Unit>("load")
 
-fun Page.onMetrics(action: (MetricsEventMessage) -> Unit) =
-    on("metrics") { action(it.unsafeCast<MetricsEventMessage>()) }
+val Page.onMetricsFLow
+    get() = flowFor<MetricsEventMessage>("metrics")
 
-fun Page.onPopup(action: (Page) -> Unit) =
-    on("popup") { action(it.unsafeCast<Page>())}
+val Page.onPopupFLow
+    get() = flowFor<Page>("popup")
 
-fun Page.onPageError(action: (Throwable) -> Unit) =
-    on("pageerror") { action(it.unsafeCast<Throwable>())}
+val Page.onPageErrorFLow
+    get() = flowFor<Throwable>("pageerror")
 
-fun Page.onClose(action: () -> Unit) =
-    on("close") { action() }
+val Page.onCloseFlow
+    get() = flowFor<Unit>("close")
 
 suspend fun Puppeteer.launch(configAction: LaunchOptions.() -> Unit): Browser =
     launch(jsObject<LaunchOptions>().apply(configAction)).await()
@@ -54,3 +57,10 @@ internal fun <T> entriesOf(jsObject: dynamic): List<Pair<String, T?>> {
 
 internal fun <T> jsObject() =
     js("{}").unsafeCast<T>()
+
+internal fun <T> EventEmitter.flowFor(eventName: String) =
+    callbackFlow<T> {
+        val callback: (Any) -> Unit = { offer(it.unsafeCast<T>()) }
+        on(eventName, callback)
+        awaitClose { off(eventName, callback) }
+    }
