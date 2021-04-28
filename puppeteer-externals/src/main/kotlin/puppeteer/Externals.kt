@@ -199,5 +199,4 @@ external interface BrowserContext : EventEmitter {
     fun pages(): Array<Array<Page>>
     fun targets(): Array<Array<Target>>
     fun waitForTarget(predicate: (Target) -> Unit, options: TargetOptions): Promise<Target>
-
 }

@@ -1,35 +1,18 @@
 package com.github.lamba92.shadowmerchant
 
-import NodeJS.get
+import fsextra.copy
 import kotlinx.coroutines.await
 import puppeteer.Puppeteer
 import puppeteer.launch
-import process
-import path.path
+import tmp.dirSuspending
 
 suspend fun main() {
+    val tmpDir = dirSuspending()
+    copy(ChromeData.defaultUserDataDirectory, tmpDir).await()
+    println(tmpDir)
     val chrome = Puppeteer.launch {
         headless = false
-        userDataDir = ChromeUserData.defaultLocation
+        userDataDir = tmpDir
     }
-    chrome.newPage().await()
-}
-
-object ChromeUserData {
-    val defaultWindowsLocation
-        get() = path.resolve(process.env["LOCALAPPDATA"]!!, "Google", "Chrome", "User Data")
-
-    val defaultMacOsLocation
-        get() = path.resolve("~", "Library", "Application Support", "Google", "Chrome")
-
-    val defaultLinuxLocation
-        get() = path.resolve("~", ".config", "google-chrome")
-
-    val defaultLocation
-        get() = when (process.platform) {
-            "win32" -> defaultWindowsLocation
-            "darwin" -> defaultMacOsLocation
-            "linux" -> defaultLinuxLocation
-            else -> error("Current OS not supported")
-        }
+    val page = chrome.newPage().await()
 }
