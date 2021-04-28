@@ -1,26 +1,32 @@
 package com.github.lamba92.shadowmerchant.data
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
 sealed class Store {
+    abstract val name: String
     abstract val loginData: LoginData
-    abstract val checkoutFlow: CheckoutData
+    abstract val checkoutData: CheckoutData
     abstract val cartLink: String
     abstract val buyCartSelector: String
 
     @Serializable
+    @SerialName("amazon")
     data class Amazon(
         override val loginData: LoginData,
-        override val checkoutFlow: CheckoutData,
+        override val checkoutData: CheckoutData,
         override val cartLink: String,
         override val buyCartSelector: String,
         val country: String,
-    ) : Store()
+    ) : Store() {
+        override val name: String
+            get() = "Amazon $country"
+    }
 
     @Serializable
     data class CheckoutData(
-        val checkoutFlow: ClickFlow,
+        val flow: ClickFlow,
         val orderCompletedVerifier: SelectorTextVerifier
     )
 }
