@@ -20,6 +20,20 @@ external val product: String
 
 external fun registerCustomQueryHandler(name: String, queryHandler: CustomQueryHandler): String
 
+external fun browser(): Browser
+
+external fun browserContext(): BrowserContext
+
+external fun click(selector: String, clickInterface: clickInterface): Promise<dynamic> //Da controllare
+
+external fun content(): Promise<String>
+
+external fun isJavaScriptEnabled(): Boolean
+
+external fun reload(reloadInterface: reloadInterface): Promise<HTTPResponse> //Da controllare
+
+external fun url(): String
+
 external interface CustomQueryHandler {
     fun queryOne(element: Element, selector: String): Element?
     fun queryAll(element: Element, selector: String): Array<Element>
@@ -208,4 +222,15 @@ external interface BrowserContext : EventEmitter {
     fun targets(): Array<Array<Target>>
     fun waitForTarget(predicate: (Target) -> Unit, options: TargetOptions): Promise<Target>
 
+}
+
+external interface reloadInterface {
+    var timeout: Number
+    var waitUntil: dynamic
+}
+
+external interface clickInterface {
+    //var button
+    var clickCount: Number
+    var delay: Number
 }
