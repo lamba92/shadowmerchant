@@ -6,8 +6,10 @@ import com.github.lamba92.kotlingram.gradle.tasks.GenerateWebpackConfig.Mode.PRO
 import com.github.lamba92.kotlingram.gradle.tasks.GenerateWebpackConfig.Target.NODE
 import com.github.lamba92.kotlingram.gradle.tasks.outputBundleFile
 import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrLink
+import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsExec
 import org.jetbrains.kotlin.gradle.targets.js.npm.tasks.RootPackageJsonTask
 import org.jetbrains.kotlin.gradle.tasks.Kotlin2JsCompile
+import kotlin.io.path.absolute
 
 plugins {
     kotlin("js")
@@ -40,6 +42,12 @@ kotlin {
                 implementation(devNpm("webpack", "5.33.2"))
             }
         }
+    }
+}
+
+tasks {
+    named<NodeJsExec>("nodeRun") {
+        environment["STORES_DIR"] = rootDir.toPath().resolve("stores").toAbsolutePath().toString()
     }
 }
 
