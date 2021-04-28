@@ -24,12 +24,17 @@ kotlin {
             }
         }
         useCommonJs()
+        binaries.executable()
     }
     sourceSets {
         main {
             dependencies {
-                implementation(project(":puppeteer-externals"))
+                implementation(projects.puppeteerExternals)
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.1.0")
+                implementation(npm("tmp", "0.2.1"))
+                implementation(npm("@types/tmp", "0.2.0"))
+                implementation(npm("fs-extra", "9.1.0"))
+                implementation(npm("@types/fs-extra", "9.0.11"))
                 implementation(devNpm("webpack-cli", "4.6.0"))
                 implementation(devNpm("terser-webpack-plugin", "5.1.1"))
                 implementation(devNpm("webpack", "5.33.2"))
