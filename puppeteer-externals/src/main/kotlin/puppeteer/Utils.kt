@@ -13,7 +13,7 @@ internal fun <T> entriesOf(jsObject: dynamic): List<Pair<String, T>> {
         .filter { it.second != null }
 }
 
-internal fun <T> jsObject() =
+fun <T> jsObject() =
     js("{}").unsafeCast<T>()
 
 internal fun <T> EventEmitter.flowFor(eventName: String) =
