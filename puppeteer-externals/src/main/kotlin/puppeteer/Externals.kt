@@ -1,6 +1,3 @@
-@file:JsModule("puppeteer")
-@file:JsNonModule
-
 package puppeteer
 
 
@@ -8,31 +5,7 @@ import NodeJS.EventEmitter
 import child_process.ChildProcess
 import org.w3c.dom.Element
 import kotlin.js.Promise
-
-/**
- * Clears all registered handlers.
- */
-external fun clearCustomQueryHandlers(): Unit
-
-external val networkConditions: Map<String, PredefinedNetworkConditions>
-
-external val product: String
-
-external fun registerCustomQueryHandler(name: String, queryHandler: CustomQueryHandler): String
-
-external fun browser(): Browser
-
-external fun browserContext(): BrowserContext
-
-external fun click(selector: String, clickInterface: clickInterface): Promise<dynamic> //Da controllare
-
-external fun content(): Promise<String>
-
-external fun isJavaScriptEnabled(): Boolean
-
-external fun reload(reloadInterface: reloadInterface): Promise<HTTPResponse> //Da controllare
-
-external fun url(): String
+import Buffer
 
 external interface CustomQueryHandler {
     fun queryOne(element: Element, selector: String): Element?
@@ -55,8 +28,58 @@ external interface HTTPRequest {
     //TODO
 }
 
+/**
+ * Represents responses which are received by a page.
+ */
 external interface HTTPResponse {
-    //TODO
+
+    /**
+     * @return Promise which resolves to a buffer with response body.
+     */
+    fun buffer(): Promise<Buffer>
+
+    /**
+     * @return A [Frame] that initiated this response, or null if navigating to error pages.
+     */
+    fun frame(): Frame?
+
+    /**
+     * True if the response was served from either the browser's disk cache or memory cache.
+     */
+    fun fromCache(): Boolean
+
+    /**
+     * True if the response was served by a service worker.
+     */
+    fun fromServiceWorker(): Boolean
+
+    /**
+     * An object with HTTP headers associated with the response. All header names are lower-case.
+     */
+    fun headers(): dynamic
+
+    /**
+     * Contains a boolean stating whether the response was successful (status in the range 200-299) or not.
+     */
+    fun ok(): Boolean
+    fun status(): Int
+    fun remoteAddress(): RemoteAddress
+    fun statusText(): String
+
+    /**
+     * @return [Promise] which resolves to a text representation of response body.
+     */
+    fun text(): Promise<String>
+
+    /**
+     * Contains the URL of the response.
+     */
+    fun url()
+}
+
+external interface RemoteAddress {
+    var ip: String
+    var port: Int
 }
 
 external interface MetricsEventMessage {
@@ -208,7 +231,48 @@ external interface ResetOnNavigationOptions {
 }
 
 external interface Page : EventEmitter {
-    // TODO
+    fun browser(): Browser
+    fun browserContext(): BrowserContext
+    fun click(selector: String, clickOptions: ClickOptions = definedExternally): Promise<Unit>
+    fun content(): Promise<String>
+    fun isJavaScriptEnabled(): Boolean
+    fun reload(reloadOptions: ReloadOptions = definedExternally): Promise<HTTPResponse>
+    fun url(): String
+    fun goto(url: String, options: GotoOptions = definedExternally): Promise<HTTPResponse?>
+    fun focus(selector: String): Promise<Unit>
+    fun type(selector: String, text: String, options: TypeOptions): Promise<Unit>
+    fun waitForNavigation(options: WaitForNavigationOptions = definedExternally): Promise<HTTPResponse?>
+}
+
+external interface WaitForNavigationOptions {
+    var timeout: Int?
+    var waitUntil: dynamic
+}
+
+external interface TypeOptions {
+    /**
+     * Time to wait between key presses in milliseconds. Defaults to 0.
+     */
+    var delay: Int
+}
+
+interface GotoOptions {
+    var timeout: Number?
+
+    /**
+     * When to consider navigation succeeded, defaults to load. Given an array of event strings, navigation is considered to be successful after all events have been fired. Events can be either:
+     *  - `load`: consider navigation to be finished when the load event is fired.
+     *  - `domcontentloaded`: consider navigation to be finished when the DOMContentLoaded event is fired.
+     *  - `networkidle0`: consider navigation to be finished when there are no more than 0 network connections for at least 500 ms.
+     *  - `networkidle2`: consider navigation to be finished when there are no more than 2 network connections for at least 500 ms.
+     */
+    var waitUntil: dynamic
+
+    /**
+     * Referer header value. If provided it will take preference over the referer header value set by [Page.setExtraHTTPHeaders()]
+     */
+    var referer: String?
+
 }
 
 external interface BrowserContext : EventEmitter {
@@ -223,13 +287,24 @@ external interface BrowserContext : EventEmitter {
     fun waitForTarget(predicate: (Target) -> Unit, options: TargetOptions): Promise<Target>
 }
 
-external interface reloadInterface {
-    var timeout: Number
+external interface ReloadOptions {
+    var timeout: Number?
     var waitUntil: dynamic
 }
 
-external interface clickInterface {
-    //var button
-    var clickCount: Number
-    var delay: Number
+external interface ClickOptions {
+    /**
+     * <"left"|"right"|"middle"> Defaults to left.
+     */
+    var button: String?
+
+    /**
+     * defaults to 1.
+     */
+    var clickCount: Number?
+
+    /**
+     * Time to wait between mousedown and mouseup in milliseconds. Defaults to 0.
+     */
+    var delay: Number?
 }
