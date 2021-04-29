@@ -29,6 +29,9 @@ kotlin {
         binaries.executable()
     }
     sourceSets {
+        all {
+            languageSettings.useExperimentalAnnotation("kotlin.time.ExperimentalTime")
+        }
         main {
             dependencies {
                 implementation(projects.puppeteerExternals)

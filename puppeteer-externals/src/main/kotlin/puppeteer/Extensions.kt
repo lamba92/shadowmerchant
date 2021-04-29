@@ -1,11 +1,8 @@
 package puppeteer
 
-import NodeJS.EventEmitter
 import kotlinx.coroutines.await
-import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.callbackFlow
 
-val Page.onConsole
+val Page.onConsoleFlow
     get() = flowFor<ConsoleMessage>("console")
 
 val Page.onDialogFLow
@@ -41,26 +38,38 @@ val Page.onPageErrorFLow
 val Page.onCloseFlow
     get() = flowFor<Unit>("close")
 
+val Page.onRequestFlow
+    get() = flowFor<HTTPRequest>("request")
+
+val Page.onRequestFailedFlow
+    get() = flowFor<HTTPRequest>("requestfailed")
+
+val Page.onRequestFinishedFlow
+    get() = flowFor<HTTPRequest>("requestfinished")
+
+val Page.onResponseFlow
+    get() = flowFor<HTTPResponse>("response")
+
+val Page.onWorkerCreatedFlow
+    get() = flowFor<WebWorker>("workercreated")
+
+val Page.onWorkerDestroyedFlow
+    get() = flowFor<WebWorker>("workerdestroyed")
+
 suspend fun Puppeteer.launch(configAction: LaunchOptions.() -> Unit): Browser =
     launch(jsObject<LaunchOptions>().apply(configAction)).await()
 
 val MetricsEventMessage.metricsMap
     get() = entriesOf<Double>(metrics).toMap()
 
-@Suppress("FunctionName")
-internal fun Object_values(jsObject: dynamic) =
-    js("Object.entries").unsafeCast<(dynamic) -> Array<Array<Any>>>()(jsObject)
+val HTTPResponse.headersMap
+    get() = entriesOf<String>(headers()).toMap()
 
-internal fun <T> entriesOf(jsObject: dynamic): List<Pair<String, T?>> {
-    return Object_values(jsObject).map { (key, value) -> key as String to value.unsafeCast<T>() }
-}
+suspend fun Page.navigate(url: String, options: GotoOptions.() -> Unit) =
+    goto(url, jsObject<GotoOptions>().apply(options)).await()
 
-internal fun <T> jsObject() =
-    js("{}").unsafeCast<T>()
+suspend fun Page.navigate(url: String) =
+    goto(url).await()
 
-internal fun <T> EventEmitter.flowFor(eventName: String) =
-    callbackFlow<T> {
-        val callback: (Any) -> Unit = { offer(it.unsafeCast<T>()) }
-        on(eventName, callback)
-        awaitClose { off(eventName, callback) }
-    }
+suspend fun Page.type(selector: String, text: String, delay: Int = 0) =
+    type(selector, text, jsObject<TypeOptions>().also { it.delay = delay }).await()
