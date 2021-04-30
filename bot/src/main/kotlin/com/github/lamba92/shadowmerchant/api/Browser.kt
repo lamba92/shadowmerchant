@@ -1,6 +1,9 @@
 package com.github.lamba92.shadowmerchant.api
 
 import com.github.lamba92.shadowmerchant.api.puppeteer.PuppeteerBrowser
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.SendChannel
 import puppeteer.Puppeteer
 import puppeteer.ViewPort
 import puppeteer.jsObject
@@ -15,7 +18,7 @@ interface Browser {
     companion object {
         suspend fun launch(
             headless: Boolean = true,
-            viewPort: ViewPortSize? = ViewPortSize(800, 600)
+            viewPort: ViewPortSize? = ViewPortSize(800, 600),
         ): Browser = PuppeteerBrowser(
             Puppeteer.launch {
                 this.headless = headless
@@ -38,8 +41,9 @@ interface Page {
     suspend fun click(
         selector: String,
         waitForNavigation: Boolean = false,
-        waitForNavigationOption: WaitForNavigationOption = WaitForNavigationOption.LOAD
+        waitForNavigationOption: WaitForNavigationOption = WaitForNavigationOption.LOAD,
     )
+
     suspend fun close(runBeforeUnloadEvent: Boolean = false)
     suspend fun waitForNavigation(option: WaitForNavigationOption = WaitForNavigationOption.LOAD)
 }
@@ -49,3 +53,54 @@ enum class WaitForNavigationOption {
 }
 
 data class ViewPortSize(val width: Int, val height: Int)
+
+suspend fun Browser.newPages(number: Int) = buildList {
+    repeat(number) {
+        add(newPage())
+    }
+}
+
+typealias PageAction = suspend Page.() -> Unit
+
+class PageExecutor private constructor(
+    val pages: List<Page>,
+    private val channel: Channel<PageAction> = Channel(pages.size),
+) : SendChannel<PageAction> by channel, CoroutineScope {
+
+    companion object {
+        operator fun invoke(pages: List<Page>) = PageExecutor(pages)
+    }
+
+    override val coroutineContext = SupervisorJob()
+
+    fun start(): Job = launch {
+        for (page in pages) {
+            launch {
+                channel.receive().invoke(page)
+            }
+        }
+    }
+
+    suspend fun dispose(cause: Throwable? = null): Boolean {
+        val result = channel.close(cause) && if (cause != null) {
+            coroutineContext.completeExceptionally(cause)
+        } else {
+            coroutineContext.complete()
+        }
+        coroutineScope {
+            pages.forEach { launch { it.close() } }
+        }
+        return result
+    }
+}
+
+fun List<Page>.asPageExecutor() = PageExecutor(this)
+
+suspend fun Browser.newPageExecutor(pages: Int) = newPages(pages).asPageExecutor()
+
+suspend fun <R> PageExecutor.use(action: (PageExecutor) -> R) =
+    try {
+        action(this)
+    } finally {
+        dispose()
+    }

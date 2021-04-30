@@ -25,13 +25,9 @@ class ShadowMerchantBot(private val browser: Browser) {
 
     suspend fun buyItemsFrom(stores: Set<Store>) = coroutineScope {
         logger.info("${stores.size} stores: ${stores.joinToString { it.name }}")
-        loginStores(stores.toList())
+        loginStores(stores)
         val tasks = stores.flatMap { store -> store.buyableItems.map { BuyingTask(store, it) } }
-        val pages = buildList {
-            repeat(tasks.size.coerceAtMost(5)) {
-                add(browser.newPage())
-            }
-        }
+        val pages = browser.newPages(tasks.size.coerceAtMost(5))
         tasks.chunked(pages.size).forEach { subTask ->
             subTask.forEachIndexed { index, buyingTask ->
                 launch { TODO("Implement refresh and buy") }
@@ -45,14 +41,10 @@ class ShadowMerchantBot(private val browser: Browser) {
         val item: BuyableItem,
     )
 
-    suspend fun loginStores(stores: List<Store>, pagesCount: Int = 3) = coroutineScope {
-        val tabsCount = stores.size.coerceAtMost(pagesCount)
-        repeat(tabsCount) { index -> // TODO use chunked(tabsCount) instead
-            launch {
-                val page = browser.newPage()
-                for (storeIndex in index until stores.size step tabsCount)
-                    page.loginStore(stores[storeIndex])
-                page.close()
+    suspend fun loginStores(stores: Collection<Store>, pagesCount: Int = 3) {
+        browser.newPageExecutor(stores.size.coerceAtMost(pagesCount)).use {
+            for (store in stores) {
+                it.offer { loginStore(store) }
             }
         }
     }
