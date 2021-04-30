@@ -1,11 +1,11 @@
 package puppeteer
 
 
+import Buffer
 import NodeJS.EventEmitter
 import child_process.ChildProcess
 import org.w3c.dom.Element
 import kotlin.js.Promise
-import Buffer
 
 external interface CustomQueryHandler {
     fun queryOne(element: Element, selector: String): Element?
@@ -246,6 +246,17 @@ external interface Page : EventEmitter {
 
 external interface WaitForNavigationOptions {
     var timeout: Int?
+
+    /**
+     * When to consider navigation succeeded, defaults to load. Given an array of event strings, navigation is
+     * considered to be successful after all events have been fired. Events can be either:
+     * - `load`: consider navigation to be finished when the load event is fired.
+     * - `domcontentloaded`: consider navigation to be finished when the DOMContentLoaded event is fired.
+     * - `networkidle0`: consider navigation to be finished when there are no more than 0 network connections for
+     * at least 500 ms.
+     * - `networkidle2`: consider navigation to be finished when there are no more than 2 network connections for
+     * at least 500 ms.
+     */
     var waitUntil: dynamic
 }
 

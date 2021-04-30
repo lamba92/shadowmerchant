@@ -6,6 +6,8 @@ import puppeteer.ViewPort
 import puppeteer.jsObject
 import puppeteer.launch
 import kotlin.time.Duration
+import kotlin.time.DurationUnit.MILLISECONDS
+import kotlin.time.toDuration
 
 
 interface Browser {
@@ -13,7 +15,7 @@ interface Browser {
     companion object {
         suspend fun launch(
             headless: Boolean = true,
-            viewPort: ViewPortSize?
+            viewPort: ViewPortSize? = ViewPortSize(800, 600)
         ): Browser = PuppeteerBrowser(
             Puppeteer.launch {
                 this.headless = headless
@@ -32,9 +34,18 @@ interface Browser {
 
 interface Page {
     suspend fun navigateTo(url: String)
-    suspend fun type(selector: String, text: String, delayBetweenInputs: Duration)
-    suspend fun click(selector: String)
-    suspend fun waitForNavigation()
+    suspend fun type(selector: String, text: String, delayBetweenInputs: Duration = 2.toDuration(MILLISECONDS))
+    suspend fun click(
+        selector: String,
+        waitForNavigation: Boolean = false,
+        waitForNavigationOption: WaitForNavigationOption = WaitForNavigationOption.LOAD
+    )
+
+    suspend fun waitForNavigation(option: WaitForNavigationOption = WaitForNavigationOption.LOAD)
+}
+
+enum class WaitForNavigationOption {
+    LOAD, DOM_CONTENT_LOADED, NETWORK_IDLE_1, NETWORK_IDLE_2
 }
 
 data class ViewPortSize(val width: Int, val height: Int)

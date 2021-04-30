@@ -9,7 +9,7 @@ sealed class Store {
     abstract val loginData: LoginData
     abstract val checkoutData: CheckoutData
     abstract val cartLink: String
-    abstract val buyCartSelector: String
+    abstract val buyCartFlow: String
 
     @Serializable
     @SerialName("amazon")
@@ -17,7 +17,7 @@ sealed class Store {
         override val loginData: LoginData,
         override val checkoutData: CheckoutData,
         override val cartLink: String,
-        override val buyCartSelector: String,
+        override val buyCartFlow: String,
         val country: String,
     ) : Store() {
         override val name: String
