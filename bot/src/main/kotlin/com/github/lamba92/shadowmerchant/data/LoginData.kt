@@ -14,6 +14,9 @@ sealed class LoginData {
     abstract val loginLink: String
     abstract val stayConnectedCheckboxSelector: String?
 
+    abstract val loginButtonSelector: String
+
+
     @Serializable
     @SerialName("singleStep")
     data class SingleStepLogin(
@@ -23,7 +26,7 @@ sealed class LoginData {
         override val usernameInputSelector: String,
         override val passwordInputSelector: String,
         override val stayConnectedCheckboxSelector: String? = null,
-        val loginSelector: String
+        override val loginButtonSelector: String,
     ) : LoginData()
 
     @Serializable
@@ -31,10 +34,10 @@ sealed class LoginData {
     data class DoubleStepLogin(
         override val username: String,
         override val usernameInputSelector: String,
-        val firstPageSelector: String,
+        val firstStepButtonSelector: String,
         override val password: String,
         override val passwordInputSelector: String,
-        val secondPageSelector: String,
+        override val loginButtonSelector: String,
         override val stayConnectedCheckboxSelector: String? = null,
         override val loginLink: String
     ) : LoginData()

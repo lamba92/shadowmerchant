@@ -31,6 +31,7 @@ kotlin {
     sourceSets {
         all {
             languageSettings.useExperimentalAnnotation("kotlin.time.ExperimentalTime")
+            languageSettings.useExperimentalAnnotation("kotlin.ExperimentalStdlibApi")
         }
         main {
             dependencies {

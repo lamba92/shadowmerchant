@@ -242,6 +242,11 @@ external interface Page : EventEmitter {
     fun focus(selector: String): Promise<Unit>
     fun type(selector: String, text: String, options: TypeOptions): Promise<Unit>
     fun waitForNavigation(options: WaitForNavigationOptions = definedExternally): Promise<HTTPResponse?>
+    fun close(options: CloseOptions = definedExternally): Promise<Unit>
+}
+
+interface CloseOptions {
+    var runBeforeUnload: Boolean?
 }
 
 external interface WaitForNavigationOptions {

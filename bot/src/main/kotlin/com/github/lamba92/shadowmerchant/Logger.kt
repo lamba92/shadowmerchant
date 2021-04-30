@@ -9,19 +9,13 @@ typealias LogAction = suspend (String) -> Unit
 
 open class Logger(
     val name: String,
-    private val logTransforms: Map<LogLevel, LogTransform>,
-    private val logActions: List<LogAction>
+    private val logTransforms: Map<LogLevel, LogTransform> = LogLevel.values().associateWith { level ->
+        { message -> "$name [$level] ${Date().toISOString()} | $message" }
+    },
+    private val logActions: List<LogAction> = listOf { println(it) }
 ) {
 
-    companion object Default : Logger(
-        "DefaultLogger",
-        LogLevel.values().associateWith { level ->
-            { message ->
-                "[$level] ${Date().toISOString()} | $message"
-            }
-        },
-        listOf { println(it) }
-    )
+    companion object Default : Logger("DefaultLogger")
 
     enum class LogLevel {
         VERBOSE, INFO, WARN, DEBUG, ERROR

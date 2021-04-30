@@ -6,10 +6,7 @@ import com.github.lamba92.shadowmerchant.api.WaitForNavigationOption
 import kotlinx.coroutines.await
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import puppeteer.WaitForNavigationOptions
-import puppeteer.jsObject
-import puppeteer.navigate
-import puppeteer.type
+import puppeteer.*
 import kotlin.time.Duration
 import kotlin.time.DurationUnit
 
@@ -32,6 +29,13 @@ class PuppeteerPage(private val page: puppeteer.Page) : Page {
             launch { waitForNavigation(waitForNavigationOption) }
 
         page.click(selector).await()
+    }
+
+    override suspend fun close(runBeforeUnloadEvent: Boolean) {
+        if (runBeforeUnloadEvent)
+            page.close(jsObject<CloseOptions>().apply { runBeforeUnload = runBeforeUnloadEvent }).await()
+        else
+            page.close().await()
     }
 
     override suspend fun waitForNavigation(option: WaitForNavigationOption) {

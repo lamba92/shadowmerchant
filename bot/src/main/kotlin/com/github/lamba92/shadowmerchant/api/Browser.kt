@@ -40,7 +40,7 @@ interface Page {
         waitForNavigation: Boolean = false,
         waitForNavigationOption: WaitForNavigationOption = WaitForNavigationOption.LOAD
     )
-
+    suspend fun close(runBeforeUnloadEvent: Boolean = false)
     suspend fun waitForNavigation(option: WaitForNavigationOption = WaitForNavigationOption.LOAD)
 }
 
