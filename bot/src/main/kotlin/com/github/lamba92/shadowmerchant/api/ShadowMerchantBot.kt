@@ -44,6 +44,7 @@ class ShadowMerchantBot(private val browser: Browser) {
     suspend fun loginStores(stores: Collection<Store>, pagesCount: Int = 3) {
         browser.newPageExecutor(stores.size.coerceAtMost(pagesCount)).use {
             for (store in stores) {
+                logger.debug(store.name)
                 it.offer { loginStore(store) }
             }
         }

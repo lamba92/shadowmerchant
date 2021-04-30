@@ -73,19 +73,21 @@ class PageExecutor private constructor(
 
     override val coroutineContext = SupervisorJob()
 
-    fun start(): Job = launch {
+    init {
         for (page in pages) {
             launch {
-                channel.receive().invoke(page)
+                while (!channel.isClosedForSend)
+                    channel.receive().invoke(page)
             }
         }
     }
 
     suspend fun dispose(cause: Throwable? = null): Boolean {
-        val result = channel.close(cause) && if (cause != null) {
-            coroutineContext.completeExceptionally(cause)
+        val result = channel.close(cause)
+        if (cause != null) {
+            coroutineContext.cancel(CancellationException(cause.message, cause))
         } else {
-            coroutineContext.complete()
+            coroutineContext.join()
         }
         coroutineScope {
             pages.forEach { launch { it.close() } }
@@ -98,7 +100,7 @@ fun List<Page>.asPageExecutor() = PageExecutor(this)
 
 suspend fun Browser.newPageExecutor(pages: Int) = newPages(pages).asPageExecutor()
 
-suspend fun <R> PageExecutor.use(action: (PageExecutor) -> R) =
+suspend inline fun <R> PageExecutor.use(action: (PageExecutor) -> R) =
     try {
         action(this)
     } finally {
