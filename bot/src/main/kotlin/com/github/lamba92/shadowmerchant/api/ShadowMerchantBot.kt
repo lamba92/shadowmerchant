@@ -5,6 +5,7 @@ import com.github.lamba92.shadowmerchant.data.BuyableItem
 import com.github.lamba92.shadowmerchant.data.LoginData
 import com.github.lamba92.shadowmerchant.data.Store
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class ShadowMerchantBot(private val browser: Browser) {
@@ -33,7 +34,6 @@ class ShadowMerchantBot(private val browser: Browser) {
                 launch { TODO("Implement refresh and buy") }
             }
         }
-
     }
 
     private data class BuyingTask(
@@ -41,16 +41,18 @@ class ShadowMerchantBot(private val browser: Browser) {
         val item: BuyableItem,
     )
 
-    suspend fun loginStores(stores: Collection<Store>, pagesCount: Int = 3) {
-        browser.newPageExecutor(stores.size.coerceAtMost(pagesCount)).use {
-            for (store in stores) {
-                logger.debug(store.name)
-                it.offer { loginStore(store) }
-            }
-        }
+    enum class PurchaseAttempt {
+        SUCCESSFUL, FAILED
     }
 
-    suspend fun Page.loginStore(store: Store) {
+    suspend fun loginStores(stores: Collection<Store>, pagesCount: Int = 3) =
+        browser.newPageExecutor<Unit>(stores.size.coerceAtMost(pagesCount)).use {
+            for (store in stores) {
+                it.offerExecution { loginStore(store) }
+            }
+        }
+
+    private suspend fun Page.loginStore(store: Store) {
         logger.info("Initiating login to ${store.name}")
         navigateTo(store.loginData.loginLink)
         type(store.loginData.usernameInputSelector, store.loginData.username)
@@ -61,5 +63,26 @@ class ShadowMerchantBot(private val browser: Browser) {
         loginData.stayConnectedCheckboxSelector?.let { click(it) }
         click(loginData.loginButtonSelector, true)
         logger.info("Logged into ${store.name}")
+    }
+
+    private suspend fun Page.checkAvailability(task: BuyingTask): Boolean {
+        val selectors = buildList {
+            task.item.customAddToCartFlow?.let { add(it.selectors.first().selector) }
+            task.item.customBuyoutFlow?.let { add(it.selectors.first().selector) }
+            add(task.store.addToCartFlow.selectors.first().selector)
+            add(task.store.buyoutFlow.selectors.first().selector)
+        }
+        return selectors.any { isSelectorVisible(it) }
+    }
+
+    private suspend fun Page.addItemToCart(task: BuyingTask) {
+        val flow = task.item.customAddToCartFlow ?: task.store.addToCartFlow
+        for ((index, selectorWithWaitTime) in flow.selectors.withIndex()) {
+            val (selector, waitTime) = selectorWithWaitTime
+            waitForSelector(selector)
+            click(selector, flow.selectors.lastIndex == index)
+            if (flow.selectors.lastIndex != index)
+                delay(waitTime)
+        }
     }
 }

@@ -243,6 +243,37 @@ external interface Page : EventEmitter {
     fun type(selector: String, text: String, options: TypeOptions): Promise<Unit>
     fun waitForNavigation(options: WaitForNavigationOptions = definedExternally): Promise<HTTPResponse?>
     fun close(options: CloseOptions = definedExternally): Promise<Unit>
+    fun `$`(selector: String): Promise<ElementHandler?>
+    fun `$$`(selector: String): Promise<Array<ElementHandler>>
+    fun waitForSelector(selector: String, options: WaitForSelectorOptions): Promise<ElementHandler>
+}
+
+external interface WaitForSelectorOptions {
+    var visible: Boolean
+    var hidden: Boolean
+    var timeout: Int
+}
+
+external interface ElementHandler : JSHandle {
+
+}
+
+external interface JSHandle {
+    fun asElement(): ElementHandler?
+    fun dispose(): Promise<Unit>
+    fun evaluate(
+        pageFunction: (dynamic) -> dynamic,
+        vararg args: dynamic
+    ): Promise<dynamic>
+    fun evaluateHandle(
+        pageFunction: (dynamic) -> dynamic,
+        vararg args: dynamic
+    ): Promise<JSHandle>
+    fun executionContext(): ExecutionContext
+}
+
+interface ExecutionContext {
+    // TODO
 }
 
 interface CloseOptions {
