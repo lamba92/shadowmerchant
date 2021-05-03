@@ -71,4 +71,7 @@ class PuppeteerBrowser(private val browser: puppeteer.Browser) : Browser {
 
     override suspend fun newPage() =
         PuppeteerPage(browser.newPage().await())
+
+    override suspend fun close() =
+        browser.close().await()
 }

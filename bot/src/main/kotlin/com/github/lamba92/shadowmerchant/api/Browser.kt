@@ -31,6 +31,7 @@ interface Browser {
 
     suspend fun openedPages(): List<Page>
     suspend fun newPage(): Page
+    suspend fun close()
 }
 
 interface Page {

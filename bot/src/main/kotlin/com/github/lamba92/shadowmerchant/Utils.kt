@@ -1,20 +1,20 @@
 package com.github.lamba92.shadowmerchant
 
 import Buffer
-import com.github.lamba92.shadowmerchant.data.ClickFlow
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.Semaphore
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.Serializer
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
-import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
-import kotlinx.serialization.json.Json
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 import kotlin.time.Duration
-import kotlin.time.DurationUnit
 import kotlin.time.DurationUnit.NANOSECONDS
 import kotlin.time.toDuration
 
@@ -36,4 +36,21 @@ object DurationSerializer : KSerializer<Duration> {
     override fun serialize(encoder: Encoder, value: Duration) {
         encoder.encodeLong(value.toLong(NANOSECONDS))
     }
+}
+
+fun <R> CoroutineScope.launchLoop(action: suspend CoroutineScope.() -> R) =
+    launch {
+        while (isActive) {
+            action()
+        }
+    }
+
+suspend fun Semaphore.awaitWithoutAcquire() {
+    acquire()
+    release()
+}
+
+suspend fun Mutex.awaitWithoutLock() {
+    lock()
+    unlock()
 }
