@@ -7,10 +7,15 @@ import kotlinx.coroutines.await
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import puppeteer.*
+import kotlin.js.Promise
 import kotlin.time.Duration
 import kotlin.time.DurationUnit.MILLISECONDS
 
 class PuppeteerPage(private val page: puppeteer.Page) : Page {
+
+    override val url: String
+        get() = page.url()
+
     override suspend fun navigateTo(url: String) {
         page.navigate(url)
     }
@@ -63,6 +68,12 @@ class PuppeteerPage(private val page: puppeteer.Page) : Page {
             false
         }
     }
+
+    override suspend fun innerText(selector: String): String? = page.`$`(selector).await()
+        ?.evaluate({ it.innerText })
+        ?.unsafeCast<Promise<String?>>()
+        ?.await()
+
 }
 
 class PuppeteerBrowser(private val browser: puppeteer.Browser) : Browser {

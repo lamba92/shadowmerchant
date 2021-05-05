@@ -37,7 +37,7 @@ kotlin {
         main {
             dependencies {
                 implementation(projects.puppeteerExternals)
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.1.0")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.2.0")
                 implementation(npm("tmp", "0.2.1"))
                 implementation(npm("@types/tmp", "0.2.0"))
                 implementation(npm("fs-extra", "9.1.0"))

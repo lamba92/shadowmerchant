@@ -35,6 +35,9 @@ interface Browser {
 }
 
 interface Page {
+
+    val url: String
+
     suspend fun navigateTo(url: String)
     suspend fun type(selector: String, text: String, delayBetweenInputs: Duration = 2.toDuration(MILLISECONDS))
     suspend fun click(
@@ -53,6 +56,7 @@ interface Page {
         timeout: Duration = 2.toDuration(SECONDS),
     ): Boolean
 
+    suspend fun innerText(selector: String): String?
 }
 
 enum class WaitForNavigationOption {
@@ -65,4 +69,9 @@ suspend fun Browser.newPages(number: Int) = buildList {
     repeat(number) {
         add(newPage())
     }
+}
+
+suspend fun Page.navigateIfNotAlready(url: String) {
+    if (this.url != url)
+        navigateTo(url)
 }

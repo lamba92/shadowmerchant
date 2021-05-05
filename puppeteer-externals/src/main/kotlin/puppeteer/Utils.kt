@@ -18,7 +18,7 @@ fun <T> jsObject() =
 
 internal fun <T> EventEmitter.flowFor(eventName: String) =
     callbackFlow {
-        val callback: (dynamic) -> Unit = { offer(it.unsafeCast<T>()) }
+        val callback: (dynamic) -> Unit = { trySend(it.unsafeCast<T>()).isSuccess }
         on(eventName, callback)
         awaitClose { off(eventName, callback) }
     }

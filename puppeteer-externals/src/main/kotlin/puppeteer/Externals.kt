@@ -263,11 +263,11 @@ external interface JSHandle {
     fun dispose(): Promise<Unit>
     fun evaluate(
         pageFunction: (dynamic) -> dynamic,
-        vararg args: dynamic
+        vararg args: dynamic = definedExternally
     ): Promise<dynamic>
     fun evaluateHandle(
         pageFunction: (dynamic) -> dynamic,
-        vararg args: dynamic
+        vararg args: dynamic = definedExternally
     ): Promise<JSHandle>
     fun executionContext(): ExecutionContext
 }

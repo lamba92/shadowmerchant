@@ -4,8 +4,10 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class BuyableItem(
-    val link: String,
+    val url: String,
     val maxPrice: Double,
+    val tags: List<String> = emptyList(),
     val customAddToCartFlow: ClickFlow? = null,
-    val customBuyoutFlow: ClickFlow? = null
+    val customBuyoutFlow: ClickFlow? = null,
+    val customPriceSelector: String? = null
 )

@@ -7,9 +7,9 @@ rootProject.name = "shadow-merchant"
 
 pluginManagement {
     plugins {
-        kotlin("js") version "1.5.0-RC"
-        kotlin("jvm") version "1.5.0-RC"
-        kotlin("plugin.serialization") version "1.5.0-RC"
+        kotlin("js") version "1.5.0"
+        kotlin("jvm") version "1.5.0"
+        kotlin("plugin.serialization") version "1.5.0"
         id("com.github.node-gradle.node") version "3.0.1"
     }
 }
