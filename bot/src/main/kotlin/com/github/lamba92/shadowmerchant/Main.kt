@@ -2,10 +2,12 @@ package com.github.lamba92.shadowmerchant
 
 import NodeJS.get
 import com.github.lamba92.shadowmerchant.data.Amazon
+import kotlinx.cli.ArgParser
 import process
 
-suspend fun main() {
+suspend fun main(args: Array<String>) {
+    val argParser = ArgParser("ShadowMerchant")
+//    val storesDirectory by argParser
 
-//    listOf(Amazon.italy("basti.lamberto@gmail.com", process.env["AMAZON_PWD"]!!))
     
 }
