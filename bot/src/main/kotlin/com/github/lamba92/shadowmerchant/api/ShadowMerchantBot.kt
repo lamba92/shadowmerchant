@@ -2,8 +2,9 @@ package com.github.lamba92.shadowmerchant.api
 
 import com.github.lamba92.shadowmerchant.Logger
 import com.github.lamba92.shadowmerchant.awaitWithoutLock
+import com.github.lamba92.shadowmerchant.core.Store
+import com.github.lamba92.shadowmerchant.core.specializedProcessors
 import com.github.lamba92.shadowmerchant.data.BuyableItem
-import com.github.lamba92.shadowmerchant.data.Store
 import com.github.lamba92.shadowmerchant.launchLoop
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
@@ -53,8 +54,11 @@ object ShadowMerchantBot {
             coroutineScope {
                 for (store in stores) {
                     launch {
+                        require(specializedProcessors[store::class]!=null
+                        ) { logger.error("Store processor implementation for ${store.name} not found!")}
+                        val dedicatedProcessor= specializedProcessors[store::class]!!
                         val page = pageQueue.receive()
-                        store.loginStore(store, page)
+                        dedicatedProcessor.loginStore(store, page)
                         pageQueue.send(page)
                     }
                 }
@@ -69,7 +73,12 @@ object ShadowMerchantBot {
                 // start the refresh job
                 launch {
                     refreshClock.receive() // throttle refreshes by waiting on a common event producer
-                    if (task.store.checkAvailability(task.item, page))
+
+                    require(specializedProcessors[task.store::class]!=null
+                    ) { logger.error("Store processor implementation for ${task.store.name} not found!")}
+                    val dedicatedProcessor= specializedProcessors[task.store::class]!!
+
+                    if (dedicatedProcessor.checkAvailability(task.store,task.item, page))
                         purchaseTaskQueue.send(task to page) // send to other actor the task and the page loaded
                     else {
                         pageQueue.send(page) // release the page back in queue
@@ -82,7 +91,15 @@ object ShadowMerchantBot {
             launchLoop {
                 for ((task, page) in purchaseTaskQueue) {
                     launch { queuesMutex.lock() } // lock refresh queue as soon as possible but non blockingly
-                    // TODO actually try to buy item
+
+                    require(specializedProcessors[task.store::class]!=null
+                    ) { logger.error("Store processor implementation for ${task.store.name} not found!")}
+                    val dedicatedProcessor= specializedProcessors[task.store::class]!!
+
+
+                    dedicatedProcessor.buyItem(task.store,page,)
+
+
                     val isPurchaseSuccessful = Random.nextBoolean()
                     if (isPurchaseSuccessful)
                         TODO("Notify and do some programmatic stuff with $task")
