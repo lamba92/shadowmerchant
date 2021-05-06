@@ -23,8 +23,8 @@ interface StoreProcessor {
         }
 
         @OptIn(InternalShadowMerchantApi::class)
-        inline fun <reified T : Store> getFor(store: T, action: StoreProcessor.() -> Unit): StoreProcessor =
-            (processors[store::class] ?: BaseStoreProcessor()).apply(action)
+        inline fun <reified T : Store, R> `for`(store: T, action: StoreProcessor.() -> R): R =
+            (processors[store::class] ?: BaseStoreProcessor()).run(action)
 
     }
 

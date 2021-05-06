@@ -53,11 +53,11 @@ object ShadowMerchantBot {
             coroutineScope {
                 for (store in stores) {
                     launch {
-                        StoreProcessor.getFor(store) {
-                            val page = pageQueue.receive()
+                        val page = pageQueue.receive()
+                        StoreProcessor.`for`(store) {
                             store.login(page)
-                            pageQueue.send(page)
                         }
+                        pageQueue.send(page)
                     }
                 }
             }
@@ -71,13 +71,11 @@ object ShadowMerchantBot {
                 // start the refresh job
                 launch {
                     refreshClock.receive() // throttle refreshes by waiting on a common event producer
-                    StoreProcessor.getFor(task.store) {
-                        if (task.store.checkAvailability(page, task.item))
-                            purchaseTaskQueue.send(task to page) // send to other actor the task and the page loaded
-                        else {
-                            pageQueue.send(page) // release the page back in queue
-                            refreshTaskQueue.send(task) // reschedule the task
-                        }
+                    if (StoreProcessor.`for`(task.store) { task.store.checkAvailability(page, task.item) })
+                        purchaseTaskQueue.send(task to page) // send to other actor the task and the page loaded
+                    else {
+                        pageQueue.send(page) // release the page back in queue
+                        refreshTaskQueue.send(task) // reschedule the task
                     }
                 }
             }
@@ -87,14 +85,12 @@ object ShadowMerchantBot {
                 for ((task, page) in purchaseTaskQueue) {
                     launch { queuesMutex.lock() } // lock refresh queue as soon as possible but non blockingly
 
-                    StoreProcessor.getFor(task.store) {
-                        if (task.store.buyItem(page))
-                            TODO("Notify and do some programmatic stuff with $task")
-                        else {
-                            queuesMutex.unlock()
-                            pageQueue.send(page)
-                            refreshTaskQueue.send(task)
-                        }
+                    if (StoreProcessor.`for`(task.store) { task.store.buyItem(page) })
+                        TODO("Notify and do some programmatic stuff with $task")
+                    else {
+                        queuesMutex.unlock()
+                        pageQueue.send(page)
+                        refreshTaskQueue.send(task)
                     }
                 }
             }
