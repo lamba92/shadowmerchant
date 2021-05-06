@@ -12,21 +12,25 @@ open class Logger(
     private val logTransforms: Map<LogLevel, LogTransform> = LogLevel.values().associateWith { level ->
         { message -> "$name [$level] ${Date().toISOString()} | $message" }
     },
-    private val logActions: List<LogAction> = listOf { println(it) }
+    private val logActions: List<LogAction> = listOf { println(it) },
+    val logLevel: LogLevel? = null,
 ) {
 
-    companion object Default : Logger("DefaultLogger")
+    companion object {
+        var globalLogLevel: LogLevel = LogLevel.INFO
+    }
 
     enum class LogLevel {
-        VERBOSE, INFO, WARN, DEBUG, ERROR
+        VERBOSE, DEBUG, INFO, WARN, ERROR, NONE
     }
 
     suspend fun log(message: String, level: LogLevel) {
-        val finalMessage = logTransforms[level]?.invoke(message)
-            ?: kotlin.error("Logger \"$name\" not configured for level $level")
-
-        coroutineScope {
-            logActions.forEach { action -> launch { action(finalMessage) } }
+        if (level < (logLevel ?: globalLogLevel)) {
+            val finalMessage = logTransforms[level]?.invoke(message)
+                ?: kotlin.error("Logger \"$name\" not configured for level $level")
+            coroutineScope {
+                logActions.forEach { action -> launch { action(finalMessage) } }
+            }
         }
     }
 

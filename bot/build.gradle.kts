@@ -23,6 +23,9 @@ kotlin {
         compilations.all {
             kotlinOptions {
                 sourceMap = true
+
+                @Suppress("SuspiciousCollectionReassignment")
+                freeCompilerArgs += "-Xopt-in=kotlin.RequiresOptIn"
             }
         }
         useCommonJs()

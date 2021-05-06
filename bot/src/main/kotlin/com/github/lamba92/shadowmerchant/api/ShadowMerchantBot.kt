@@ -2,21 +2,21 @@ package com.github.lamba92.shadowmerchant.api
 
 import com.github.lamba92.shadowmerchant.Logger
 import com.github.lamba92.shadowmerchant.awaitWithoutLock
+import com.github.lamba92.shadowmerchant.core.Store
+import com.github.lamba92.shadowmerchant.core.StoreProcessor
 import com.github.lamba92.shadowmerchant.data.BuyableItem
-import com.github.lamba92.shadowmerchant.data.Store
 import com.github.lamba92.shadowmerchant.launchLoop
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.Channel.Factory.RENDEZVOUS
 import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.sync.Mutex
-import kotlin.random.Random
 import kotlin.time.DurationUnit.MILLISECONDS
 import kotlin.time.toDuration
 
 object ShadowMerchantBot {
 
-    private val logger = Logger("ShadowMerchantBot")
+    private val logger = Logger("ShadowMerchantBot") // TODO log stuff around
 
     data class BuyingTask(
         val store: Store,
@@ -53,9 +53,11 @@ object ShadowMerchantBot {
             coroutineScope {
                 for (store in stores) {
                     launch {
-                        val page = pageQueue.receive()
-                        store.loginStore(store, page)
-                        pageQueue.send(page)
+                        StoreProcessor.getFor(store) {
+                            val page = pageQueue.receive()
+                            store.login(page)
+                            pageQueue.send(page)
+                        }
                     }
                 }
             }
@@ -69,11 +71,13 @@ object ShadowMerchantBot {
                 // start the refresh job
                 launch {
                     refreshClock.receive() // throttle refreshes by waiting on a common event producer
-                    if (task.store.checkAvailability(task.item, page))
-                        purchaseTaskQueue.send(task to page) // send to other actor the task and the page loaded
-                    else {
-                        pageQueue.send(page) // release the page back in queue
-                        refreshTaskQueue.send(task) // reschedule the task
+                    StoreProcessor.getFor(task.store) {
+                        if (task.store.checkAvailability(page, task.item))
+                            purchaseTaskQueue.send(task to page) // send to other actor the task and the page loaded
+                        else {
+                            pageQueue.send(page) // release the page back in queue
+                            refreshTaskQueue.send(task) // reschedule the task
+                        }
                     }
                 }
             }
@@ -82,14 +86,15 @@ object ShadowMerchantBot {
             launchLoop {
                 for ((task, page) in purchaseTaskQueue) {
                     launch { queuesMutex.lock() } // lock refresh queue as soon as possible but non blockingly
-                    // TODO actually try to buy item
-                    val isPurchaseSuccessful = Random.nextBoolean()
-                    if (isPurchaseSuccessful)
-                        TODO("Notify and do some programmatic stuff with $task")
-                    else {
-                        queuesMutex.unlock()
-                        pageQueue.send(page)
-                        refreshTaskQueue.send(task)
+
+                    StoreProcessor.getFor(task.store) {
+                        if (task.store.buyItem(page))
+                            TODO("Notify and do some programmatic stuff with $task")
+                        else {
+                            queuesMutex.unlock()
+                            pageQueue.send(page)
+                            refreshTaskQueue.send(task)
+                        }
                     }
                 }
             }
