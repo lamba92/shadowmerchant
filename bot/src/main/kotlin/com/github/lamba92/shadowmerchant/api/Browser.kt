@@ -75,3 +75,5 @@ suspend fun Page.navigateIfNotAlready(url: String) {
     if (this.url != url)
         navigateTo(url)
 }
+
+suspend fun Page.refreshPage() = navigateTo(this.url)

@@ -3,9 +3,11 @@ package com.github.lamba92.shadowmerchant.core.processors
 import com.github.lamba92.shadowmerchant.Logger
 import com.github.lamba92.shadowmerchant.api.Page
 import com.github.lamba92.shadowmerchant.api.navigateIfNotAlready
+import com.github.lamba92.shadowmerchant.api.refreshPage
 import com.github.lamba92.shadowmerchant.core.Store
 import com.github.lamba92.shadowmerchant.core.StoreProcessor
 import com.github.lamba92.shadowmerchant.data.BuyableItem
+import com.github.lamba92.shadowmerchant.data.ClickFlow
 import com.github.lamba92.shadowmerchant.data.LoginData
 import kotlinx.coroutines.delay
 import kotlin.time.Duration
@@ -75,7 +77,18 @@ open class BaseStoreProcessor : StoreProcessor {
     }
 
     override suspend fun Store.buyItem(page: Page, retryAttempt: Int, retryDelay: Duration): Boolean {
-        TODO("Not yet implemented")
+        val isSuccessful = if (page.isSelectorVisible(buyoutFlow.selectors.first().selector)) {
+            page.clickSelectorsFlowWithRetry(buyoutFlow)
+        } else {
+            page.clickSelectorsFlowWithRetry(buyCartFlow)
+        }
+        if (isSuccessful) {
+            logger.info("IS DONE! YOU BOUGHT THE ITEM!! GG")
+            //todo successful notification and finalization operations here
+        } else {
+            logger.info("Failed to shop the item, maybe not more available")
+        }
+        return isSuccessful
     }
 
     override suspend fun Store.login(page: Page) {
@@ -90,5 +103,29 @@ open class BaseStoreProcessor : StoreProcessor {
     }
 
 }
+
+suspend fun Page.clickSelectorsFlowWithRetry(
+    selectorFlow: ClickFlow,
+    retryAttempt: Int = 20,
+    retryDelay: Duration = Duration.Companion.seconds(1)
+): Boolean {
+    selectorFlow.selectors.forEach { (selector, _) ->
+        if (this.isSelectorVisible(selector)) {
+            this.click(selector, true)
+        } else {
+            repeat(retryAttempt) {
+                if (this.isSelectorVisible(selector)) {
+                    this.click(selector, true)
+                    //todo maybe perform a check for validate the purchase
+                    return true
+                } else if (it == retryAttempt) return false
+                delay(retryDelay)
+                this.refreshPage()
+            }
+        }
+    }
+    return false
+}
+
 
 object AmazonStoreProcessor : BaseStoreProcessor()

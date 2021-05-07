@@ -63,7 +63,13 @@ data class Amazon(
             buyCartFlow = ClickFlow(
                 selectors = listOf(
                     ClickFlow.SelectorWithWaitTime(
-                        selector = "#sc-buy-box-ptc-button > span > input"
+                        selector = "#add-to-cart-button"
+                    ),
+                    ClickFlow.SelectorWithWaitTime(
+                        selector = "#hlb-ptc-btn-native"
+                    ),
+                    ClickFlow.SelectorWithWaitTime(
+                        selector = "#submitOrderButtonId"
                     )
                 ),
                 canSkipSelector = false
@@ -71,8 +77,9 @@ data class Amazon(
             buyoutFlow = ClickFlow(
                 selectors = listOf(
                     ClickFlow.SelectorWithWaitTime(
-                        selector = "#buy-now-button"
-                    )
+                        selector = "#buy-now-button",
+                    ),
+                    ClickFlow.SelectorWithWaitTime(selector = "#submitOrderButtonId")
                 ),
                 canSkipSelector = false
             ),
